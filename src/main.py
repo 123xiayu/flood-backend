@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .api.v1.routes import api_router
+from api.v1.routes import api_router
 
 def create_app() -> FastAPI:
     app = FastAPI(title="flood-backend")
