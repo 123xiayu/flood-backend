@@ -1,72 +1,59 @@
-from fastapi import APIRouter
-import requests
-import xml.etree.ElementTree as ET
-from pydantic import BaseModel
 
+from fastapi import APIRouter
+from pydantic import BaseModel
+from core.bom import fetch_weather_observation
+from core.bom import parse_forecast_for_station
+from core.bom import fetch_bom_forecast_xml
 from core.helpers import find_nearest_station
 
 router = APIRouter()
 
 class WeatherRequest(BaseModel):
-    lat: float
-    lon: float
+	lat: float
+	lon: float
 
 @router.post("/forecast", tags=["forecast"])
 def get_forecast(request: WeatherRequest):
-
-	# Find nearest station
-	nearest_station = find_nearest_station(request.lat, request.lon)
-	print(nearest_station['AAC'])
-	
-	url = "http://www.bom.gov.au/fwo/IDW14199.xml"
-
-	headers = {
-		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-		'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-		'Accept-Encoding': 'gzip, deflate'
-	}
-
 	try:
+		nearest_station = find_nearest_station(request.lat, request.lon)
+		if not nearest_station:
+			return {"code": 1, "message": "No weather station found", "data": None}
+		xml_content = fetch_bom_forecast_xml()
+		forecasts = parse_forecast_for_station(xml_content, nearest_station['AAC'])
+		return {"code": 0, "message": "Success", "data": forecasts}
+	except Exception as e:
+		return {"code": 1, "message": f"Error: {str(e)}", "data": None}
 
-		response = requests.get(url, headers=headers)
-		if response.status_code != 200:
-			return {
-				"code": 1,
-				"message": f"Failed to fetch forecast data: HTTP {response.status_code}",
-				"data": None
-			}
-		
-		# Parse XML
-		root = ET.fromstring(response.content)
-		forecasts = []
-
-		# Extract forecast periods and text
-		for area in root.findall(".//area"):
-			if area.attrib.get("aac", "") != nearest_station['AAC']:
-				continue
-			area_name = area.attrib.get("description", "")
-			for period in area.findall("forecast-period"):
-				period_data = {
-					"area": area_name,
-					"start_time": period.attrib.get("start-time-local", ""),
-					"end_time": period.attrib.get("end-time-local", ""),
-					"forecast": {}
-				}
-				for elem in period:
-					if elem.tag == "text":
-						period_data["forecast"][elem.attrib.get("type", "text")] = elem.text
-					else:
-						period_data["forecast"][elem.tag] = elem.text
-				forecasts.append(period_data)
+# New endpoint: /weathercondition
+@router.post("/weathercondition", tags=["weather"])
+def get_weather_condition(request: WeatherRequest):
+	try:
+		nearest_station = find_nearest_station(request.lat, request.lon)
+		if not nearest_station:
+			return {"code": 1, "message": "No weather station found", "data": None}
+		# Get first precis and element (icon code) from forecast
+		xml_content = fetch_bom_forecast_xml()
+		forecasts = parse_forecast_for_station(xml_content, nearest_station['AAC'])
+		precis = None
+		forecast_icon_code = None
+		if forecasts:
+			precis = forecasts[0]['forecast'].get('precis')
+			# Find the first 'element' tag value in the first forecast period
+			# The 'element' tag is usually used for icon codes in BOM XML
+			forecast_icon_code = forecasts[0]['forecast'].get('element')
+		# Get temperature from weather observation
+		observations = fetch_weather_observation(nearest_station)
+		temperature = None
+		if observations:
+			temperature = observations[0].get('air_temp')
 		return {
 			"code": 0,
 			"message": "Success",
-			"data": forecasts
+			"data": {
+				"precis": precis,
+				"temperature": temperature,
+				"forecast_icon_code": forecast_icon_code
+			}
 		}
-	
 	except Exception as e:
-		return {
-			"code": 1,
-			"message": f"Error: {str(e)}",
-			"data": None
-		}
+		return {"code": 1, "message": f"Error: {str(e)}", "data": None}
