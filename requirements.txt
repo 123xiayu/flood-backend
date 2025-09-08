@@ -42,3 +42,4 @@ urllib3-future==2.13.906
 uvicorn==0.35.0
 wassima==2.0.1
 weather-au==0.0.7
+feedparser==6.0.10
