@@ -1,10 +1,11 @@
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from core.bom import fetch_weather_observation
 from core.bom import parse_forecast_for_station
 from core.bom import fetch_bom_forecast_xml
 from core.helpers import find_nearest_station
+from core.auth import verify_token
 
 router = APIRouter()
 
@@ -13,7 +14,7 @@ class WeatherRequest(BaseModel):
 	lon: float
 
 @router.post("/forecast", tags=["forecast"])
-def get_forecast(request: WeatherRequest):
+def get_forecast(request: WeatherRequest, token: str = Depends(verify_token)):
 	try:
 		nearest_station = find_nearest_station(request.lat, request.lon)
 		if not nearest_station:
@@ -26,7 +27,7 @@ def get_forecast(request: WeatherRequest):
 
 # New endpoint: /weathercondition
 @router.post("/weathercondition", tags=["weather"])
-def get_weather_condition(request: WeatherRequest):
+def get_weather_condition(request: WeatherRequest, token: str = Depends(verify_token)):
 	try:
 		nearest_station = find_nearest_station(request.lat, request.lon)
 		if not nearest_station:

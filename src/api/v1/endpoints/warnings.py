@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import requests
@@ -7,6 +7,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import re
 from core.helpers import find_nearest_station, calculate_distance
+from core.auth import verify_token
 
 router = APIRouter()
 
@@ -232,7 +233,7 @@ def filter_warnings_by_location(warnings: List[Dict[str, Any]], lat: float, lon:
     return filtered_warnings
 
 @router.post("/warnings", tags=["warnings"])
-def get_weather_warnings(request: WarningsRequest):
+def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_token)):
     """
     Get weather warnings for a specific location within a radius.
     Returns all active weather warnings from BOM RSS feed with optional detailed content.
@@ -287,7 +288,7 @@ def get_weather_warnings(request: WarningsRequest):
         }
 
 @router.get("/warnings/all", tags=["warnings"])
-def get_all_weather_warnings(fetch_details: bool = True):
+def get_all_weather_warnings(fetch_details: bool = True, token: str = Depends(verify_token)):
     """
     Get all weather warnings without location filtering.
     Returns all active weather warnings from BOM RSS feed with optional detailed content.

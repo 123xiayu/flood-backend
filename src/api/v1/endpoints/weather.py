@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from typing import Dict, Any
 from pydantic import BaseModel
 import requests
@@ -7,6 +7,7 @@ import io
 import pandas as pd
 
 from core.helpers import find_nearest_station
+from core.auth import verify_token
 
 router = APIRouter()
 
@@ -91,7 +92,7 @@ class HistoricalWeatherRequest(BaseModel):
     end_date: str    # Format: "YYYY-MM-DD"
 
 @router.post("/weather", tags=["weather"])
-def get_weather(request: WeatherRequest):
+def get_weather(request: WeatherRequest, token: str = Depends(verify_token)):
     try:
         # Find nearest station
         nearest_station = find_nearest_station(request.lat, request.lon)
@@ -174,7 +175,7 @@ def get_weather(request: WeatherRequest):
         }
 
 @router.post("/weather/historical", tags=["weather"])
-def get_historical_weather(request: HistoricalWeatherRequest):
+def get_historical_weather(request: HistoricalWeatherRequest, token: str = Depends(verify_token)):
     try:
         # Parse dates
         start_date = datetime.strptime(request.start_date, "%Y-%m-%d")
