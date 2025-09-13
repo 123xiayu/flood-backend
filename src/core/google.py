@@ -1,0 +1,38 @@
+
+from dotenv import load_dotenv
+import os   
+import requests
+
+
+load_dotenv()
+api_key = os.environ.get("GOOGLE_API_KEY")
+base_url = "https://weather.googleapis.com/v1/"
+
+def fetch_google_conditions(coordinates):
+	try:
+		lat, lon = coordinates
+		if not api_key:
+			return {"code": 1, "message": "GOOGLE_API_KEY not set in environment", "data": None}
+		url = f"{base_url}currentConditions:lookup?key={api_key}&location.latitude={lat}&location.longitude={lon}"
+		response = requests.get(url)
+		response.raise_for_status()
+		data = response.json()
+		
+		return  data
+	except Exception as e:
+		return e
+
+
+def fetch_google_forecast(coordinates):
+	try:
+		lat, lon = coordinates
+		if not api_key:
+			return {"code": 1, "message": "GOOGLE_API_KEY not set in environment", "data": None}
+		url = f"{base_url}forecast/hours:lookup?key={api_key}&location.latitude={lat}&location.longitude={lon}"
+		response = requests.get(url)
+		response.raise_for_status()
+		data = response.json()
+		
+		return  data
+	except Exception as e:
+		return e
