@@ -12,7 +12,7 @@ import json
 import logging
 import requests
 
-from config import settings
+from core.config import settings
 
 dt_base_url = settings.DT_BASE_URL
 
@@ -34,14 +34,6 @@ def fetch_digital_twin_risk(
     -------
     dict: Parsed JSON from the Digital Twin service or an error structure.
     """
-
-    # Hard-coded fallbacks per initial requirement
-    if lat is None:
-        lat = -31.846050
-    if lon is None:
-        lon = 115.898611
-    if rainfall_event_id is None:
-        rainfall_event_id = "design_2yr"
 
     url = f"{dt_base_url}risk/point"
     if rainfall_event_id is None:

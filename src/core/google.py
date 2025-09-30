@@ -1,6 +1,6 @@
 
 import requests
-from config import settings
+from core.config import settings
 
 api_key = settings.GOOGLE_API_KEY
 base_url = settings.GOOGLE_BASE_URI
