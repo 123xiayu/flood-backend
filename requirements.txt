@@ -1,9 +1,13 @@
+## FastAPI for API endpoints
 fastapi==0.116.1
+
+## ASGI server for running FastAPI
 uvicorn==0.35.0
+
+
 pydantic==2.11.7
 requests==2.32.5
 feedparser==6.0.10
 bs4==0.0.2
 pandas==2.3.2
 pydantic-settings==2.10.1
-python-dotenv==1.1.1

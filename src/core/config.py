@@ -3,14 +3,16 @@ from typing import Optional, ClassVar
 import os
 
 
-
 class Settings(BaseSettings):
     APP_NAME: str = "flood-backend"
-    ENV: str = "dev"
     API_TOKEN: Optional[str] = None
-    api_key: str = ""  # Add this line for API key from .env
-    # Use absolute path for .env file for cross-platform compatibility
-    env_path: ClassVar[str] = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+    DT_API_TOKEN: Optional[str] = None
+    DT_BASE_URL: Optional[str] = None
+    GOOGLE_API_KEY: Optional[str] = None
+    GOOGLE_BASE_URI: Optional[str] = None
+    env_path: ClassVar[str] = os.path.join(os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
     model_config = SettingsConfigDict(env_file=env_path, extra="ignore")
+
 
 settings = Settings()
