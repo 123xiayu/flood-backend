@@ -63,7 +63,40 @@ def fetch_digital_twin_risk(
         return e
 
 
-__all__ = ["fetch_digital_twin_risk"]
+def post_user_report(
+        IssueReport: Any
+) -> Dict[str, Any]:
+    """POST to Digital Twin report endpoint and return JSON response.
+
+    Parameters
+    ----------
+    IssueReport: Report data structure containing issue details.
+
+    Returns
+    -------
+    dict: Parsed JSON from the Digital Twin service or an error structure.
+    """
+
+    url = f"{dt_base_url}report"
+
+    payload = IssueReport.dict()
+
+    headers = {
+        "Content-Type": "application/json",
+        'Authorization': f'Bearer {settings.DT_API_TOKEN}'
+    }
+
+    try:
+        response = requests.post(url, headers=headers,
+                                 data=json.dumps(payload))
+        response.raise_for_status()
+        data = response.json()
+        return data
+    except Exception as e:
+        return e
+
+
+__all__ = ["fetch_digital_twin_risk", "post_user_report"]
 
 if __name__ == "__main__":  # Simple manual test harness
     logging.basicConfig(level=logging.INFO)

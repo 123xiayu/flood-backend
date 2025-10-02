@@ -2,29 +2,23 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict
 
-from core.digitaltwin import fetch_digital_twin_risk
+from core.digitaltwin import post_user_report
 
 router = APIRouter()
 
 
-class RiskRequest(BaseModel):
-    lat: float = Field(
-        None, description="Latitude in decimal degrees")
-    lon: float = Field(
-        None, description="Longitude in decimal degrees")
-    rainfall_event_id: Optional[str] = Field(
-        None,
-        description="Rainfall event identifier (e.g. design_2yr, design_10yr)."
-    )
+class IssueReport(BaseModel):
+    issue_type: str = Field(..., description="Type of the reported issue")
+    description: Optional[str] = Field(None, description="Description of the issue")
+    location: Dict[str, float] = Field(..., description="Location with latitude and longitude")
+    user: Dict[str, str] = Field(..., description="User information with uid, display_name, and email")
 
 
-@router.post("/risk", tags=["risk"])
-def get_risk(request: RiskRequest) -> Dict[str, Any]:
+@router.post("/report", tags=["report"])
+def get_risk(request: IssueReport) -> Dict[str, Any]:
     try:
-        result = fetch_digital_twin_risk(
-            lat=request.lat,
-            lon=request.lon,
-            rainfall_event_id=request.rainfall_event_id,
+        result = post_user_report(
+            IssueReport=request
         )
 
         # The core function currently returns either a dict (success) or an Exception instance on error
@@ -36,4 +30,5 @@ def get_risk(request: RiskRequest) -> Dict[str, Any]:
 
         return {"code": 0, "message": "Success", "data": result}
     except Exception as e:  # Fallback safeguard
+        print(e)
         return {"code": 1, "message": f"Unhandled error: {str(e)}", "data": None}
