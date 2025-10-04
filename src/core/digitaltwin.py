@@ -12,7 +12,7 @@ import json
 import logging
 import requests
 
-from core.config import settings
+from src.core.config import settings
 
 dt_base_url = settings.DT_BASE_URL
 

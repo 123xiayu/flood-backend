@@ -1,21 +1,23 @@
+import requests
+import feedparser
+import re
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
-import requests
-import feedparser
 from datetime import datetime
 from bs4 import BeautifulSoup
-import re
-from core.helpers import find_nearest_station, calculate_distance
-from core.auth import verify_token
+from src.core.helpers import find_nearest_station, calculate_distance
+from src.core.auth import verify_token
 
 router = APIRouter()
+
 
 class WarningsRequest(BaseModel):
     lat: float
     lon: float
-    radius_km: Optional[float] = 100.0 
+    radius_km: Optional[float] = 100.0
     fetch_details: Optional[bool] = True
+
 
 def fetch_warning_details(url: str) -> Dict[str, Any]:
     """Fetch and parse detailed warning content from a URL"""
@@ -27,35 +29,35 @@ def fetch_warning_details(url: str) -> Dict[str, Any]:
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive'
         }
-        
+
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code != 200:
             return {"error": f"Failed to fetch details: HTTP {response.status_code}"}
-        
+
         soup = BeautifulSoup(response.content, 'lxml')
-        
+
         details = {}
-        
+
         product_content = soup.find('div', {'class': 'product'})
         if not product_content:
             product_content = soup.find('div', {'id': 'content'})
         if not product_content:
             product_content = soup.find('pre')
-        
+
         if product_content:
             # Extract text content
             text = product_content.get_text(separator='\n', strip=True)
             details['full_text'] = text
-            
+
             # Try to extract specific warning details
             lines = text.split('\n')
-            
+
             # Extract warning type
             for line in lines[:5]:
                 if 'WARNING' in line.upper() or 'WEATHER' in line.upper():
                     details['warning_type'] = line.strip()
                     break
-            
+
             # Extract location/area
             area_pattern = r'for\s+(.+?)(?:\.|$)'
             for line in lines:
@@ -63,7 +65,7 @@ def fetch_warning_details(url: str) -> Dict[str, Any]:
                 if match:
                     details['affected_areas'] = match.group(1).strip()
                     break
-            
+
             # Extract issue time
             time_pattern = r'Issued at (\d+:\d+\s+\w+\s+\w+)'
             for line in lines:
@@ -71,7 +73,7 @@ def fetch_warning_details(url: str) -> Dict[str, Any]:
                 if match:
                     details['issue_time'] = match.group(1)
                     break
-            
+
             # Extract warning level/severity
             if 'SEVERE' in text.upper():
                 details['severity'] = 'Severe'
@@ -81,7 +83,7 @@ def fetch_warning_details(url: str) -> Dict[str, Any]:
                 details['severity'] = 'Minor'
             else:
                 details['severity'] = 'Standard'
-            
+
             # Extract next issue time if available
             next_pattern = r'Next issue[:\s]+(.+?)(?:\.|$)'
             for line in lines:
@@ -89,9 +91,10 @@ def fetch_warning_details(url: str) -> Dict[str, Any]:
                 if match:
                     details['next_issue'] = match.group(1).strip()
                     break
-            
+
             # Extract warning message/summary
-            warning_msg_start = ['WEATHER SITUATION:', 'WARNING:', 'FORECAST:', 'SITUATION:']
+            warning_msg_start = ['WEATHER SITUATION:',
+                                 'WARNING:', 'FORECAST:', 'SITUATION:']
             for start_phrase in warning_msg_start:
                 if start_phrase in text:
                     idx = text.index(start_phrase)
@@ -99,11 +102,12 @@ def fetch_warning_details(url: str) -> Dict[str, Any]:
                     msg = text[idx:idx+500].split('\n\n')[0]
                     details['warning_message'] = msg
                     break
-        
+
         return details
-        
+
     except Exception as e:
         return {"error": f"Failed to parse details: {str(e)}"}
+
 
 def fetch_warnings_rss() -> Dict[str, Any]:
     """Fetch weather warnings RSS feed from BOM for Western Australia"""
@@ -114,7 +118,7 @@ def fetch_warnings_rss() -> Dict[str, Any]:
         "https://www.bom.gov.au/fwo/IDZ00058.warnings_marine_wa.xml",  # Marine warnings
         "http://www.bom.gov.au/fwo/IDZ00060.warnings_wa.xml"  # HTTP fallback
     ]
-    
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -123,14 +127,14 @@ def fetch_warnings_rss() -> Dict[str, Any]:
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1'
     }
-    
+
     for url in urls:
         try:
             # Try with feedparser first
             feed = feedparser.parse(url)
             if feed.entries:
                 return {"feed": feed, "url": url}
-            
+
             # Try with requests if feedparser doesn't work
             response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
@@ -139,19 +143,20 @@ def fetch_warnings_rss() -> Dict[str, Any]:
                     return {"feed": feed, "url": url}
         except Exception as e:
             continue
-    
+
     # Return empty feed if all attempts fail
     return {"feed": {"entries": []}, "url": None}
+
 
 def parse_warnings_feed(feed_data: Dict[str, Any], fetch_details: bool = False) -> List[Dict[str, Any]]:
     """Parse RSS feed and extract warning information"""
     feed = feed_data["feed"]
     warnings = []
-    
+
     # Check if feed has entries attribute
     if not hasattr(feed, 'entries'):
         return warnings
-    
+
     for entry in feed.entries:
         warning = {
             "title": entry.get("title", "").strip(),
@@ -161,21 +166,22 @@ def parse_warnings_feed(feed_data: Dict[str, Any], fetch_details: bool = False) 
             "category": entry.get("category", ""),
             "guid": entry.get("id", entry.get("guid", "")),
         }
-        
+
         # Clean up title (remove extra whitespace and newlines)
         warning["title"] = ' '.join(warning["title"].split())
-        
+
         # Try to parse the publication date
         if warning["pub_date"]:
             try:
                 pub_date_parsed = entry.get("published_parsed")
                 if pub_date_parsed:
-                    warning["pub_date_parsed"] = datetime(*pub_date_parsed[:6]).isoformat()
+                    warning["pub_date_parsed"] = datetime(
+                        *pub_date_parsed[:6]).isoformat()
                 else:
                     warning["pub_date_parsed"] = None
             except:
                 warning["pub_date_parsed"] = None
-        
+
         # Extract warning type from title
         title_lower = warning["title"].lower()
         if "marine" in title_lower:
@@ -192,14 +198,15 @@ def parse_warnings_feed(feed_data: Dict[str, Any], fetch_details: bool = False) 
             warning["type"] = "Tropical Cyclone"
         else:
             warning["type"] = "General"
-        
+
         # Fetch detailed content if requested
         if fetch_details and warning["link"]:
             warning["details"] = fetch_warning_details(warning["link"])
-        
+
         warnings.append(warning)
-    
+
     return warnings
+
 
 def filter_warnings_by_location(warnings: List[Dict[str, Any]], lat: float, lon: float, radius_km: float) -> List[Dict[str, Any]]:
     """
@@ -207,10 +214,10 @@ def filter_warnings_by_location(warnings: List[Dict[str, Any]], lat: float, lon:
     Note: This is a basic implementation that returns all warnings with location context.
     For more accurate filtering, we would need specific location data for each warning.
     """
-    
+
     # Get nearest station for reference
     nearest_station = find_nearest_station(lat, lon)
-    
+
     # Add location context to all warnings
     filtered_warnings = []
     for warning in warnings:
@@ -221,16 +228,17 @@ def filter_warnings_by_location(warnings: List[Dict[str, Any]], lat: float, lon:
             "lon": lon,
             "radius_km": radius_km
         }
-        
+
         if nearest_station:
             warning_with_location["nearest_station"] = {
                 "name": nearest_station["name"],
                 "distance_km": calculate_distance(lat, lon, nearest_station["lat"], nearest_station["lon"])
             }
-        
+
         filtered_warnings.append(warning_with_location)
-    
+
     return filtered_warnings
+
 
 @router.post("/warnings", tags=["warnings"])
 def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_token)):
@@ -240,21 +248,22 @@ def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_t
     """
     try:
         feed_data = fetch_warnings_rss()
-        
+
         # Parse warnings with optional details
-        all_warnings = parse_warnings_feed(feed_data, fetch_details=request.fetch_details)
-        
+        all_warnings = parse_warnings_feed(
+            feed_data, fetch_details=request.fetch_details)
+
         # Filter by location (basic implementation for now)
         filtered_warnings = filter_warnings_by_location(
-            all_warnings, 
-            request.lat, 
-            request.lon, 
+            all_warnings,
+            request.lat,
+            request.lon,
             request.radius_km
         )
-        
+
         # Get nearest station info for context
         nearest_station = find_nearest_station(request.lat, request.lon)
-        
+
         return {
             "code": 0,
             "message": "Success",
@@ -279,7 +288,7 @@ def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_t
                 }
             }
         }
-        
+
     except Exception as e:
         return {
             "code": 1,
@@ -287,22 +296,24 @@ def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_t
             "data": None
         }
 
+
 @router.get("/warnings/all", tags=["warnings"])
 def get_all_weather_warnings(fetch_details: bool = True, token: str = Depends(verify_token)):
     """
     Get all weather warnings without location filtering.
     Returns all active weather warnings from BOM RSS feed with optional detailed content.
-    
+
     Query parameters:
     - fetch_details: Whether to fetch detailed content from each warning URL (default: True)
     """
     try:
         # Fetch RSS feed
         feed_data = fetch_warnings_rss()
-        
+
         # Parse warnings with details
-        all_warnings = parse_warnings_feed(feed_data, fetch_details=fetch_details)
-        
+        all_warnings = parse_warnings_feed(
+            feed_data, fetch_details=fetch_details)
+
         return {
             "code": 0,
             "message": "Success",
@@ -316,7 +327,7 @@ def get_all_weather_warnings(fetch_details: bool = True, token: str = Depends(ve
                 }
             }
         }
-        
+
     except Exception as e:
         return {
             "code": 1,

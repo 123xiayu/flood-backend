@@ -2,16 +2,19 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict
 
-from core.digitaltwin import post_user_report
+from src.core.digitaltwin import post_user_report
 
 router = APIRouter()
 
 
 class IssueReport(BaseModel):
     issue_type: str = Field(..., description="Type of the reported issue")
-    description: Optional[str] = Field(None, description="Description of the issue")
-    location: Dict[str, float] = Field(..., description="Location with latitude and longitude")
-    user: Dict[str, str] = Field(..., description="User information with uid, display_name, and email")
+    description: Optional[str] = Field(
+        None, description="Description of the issue")
+    location: Dict[str, float] = Field(...,
+                                       description="Location with latitude and longitude")
+    user: Dict[str, str] = Field(
+        ..., description="User information with uid, display_name, and email")
 
 
 @router.post("/report", tags=["report"])

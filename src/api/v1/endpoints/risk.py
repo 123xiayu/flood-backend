@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict
 
-from core.digitaltwin import fetch_digital_twin_risk
+from src.core.digitaltwin import fetch_digital_twin_risk
 
 router = APIRouter()
 

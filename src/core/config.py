@@ -9,9 +9,10 @@ class Settings(BaseSettings):
     DT_API_TOKEN: Optional[str] = None
     DT_BASE_URL: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
-    GOOGLE_BASE_URI: Optional[str] = None
+    GOOGLE_BASE_URL: Optional[str] = None
     env_path: ClassVar[str] = os.path.join(os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+    print(f"Loading environment variables from: {env_path}")
     model_config = SettingsConfigDict(env_file=env_path, extra="ignore")
 
 

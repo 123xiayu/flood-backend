@@ -1,15 +1,17 @@
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
-from core.config import settings
+from src.core.config import settings
 
 security = HTTPBearer()
+
 
 def get_api_token() -> str:
     token = settings.API_TOKEN
     if not token:
         raise ValueError("API_TOKEN is not configured")
     return token
+
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
     token = credentials.credentials
