@@ -68,13 +68,20 @@ def post_user_report(
 ) -> Dict[str, Any]:
     """POST to Digital Twin report endpoint and return JSON response.
 
+    Submits a user issue report to the Digital Twin platform for processing
+    and analysis. The report data is serialized to JSON and sent with
+    authentication headers.
+
     Parameters
     ----------
-    IssueReport: Report data structure containing issue details.
+    IssueReport: Report data structure containing issue details. Must have
+                a dict() method to serialize to dictionary format.
 
     Returns
     -------
-    dict: Parsed JSON from the Digital Twin service or an error structure.
+    dict: Parsed JSON response from the Digital Twin service containing
+          the processing result and any assigned identifiers.
+    Exception: If the HTTP request fails or authentication is invalid.
     """
 
     url = f"{dt_base_url}report"

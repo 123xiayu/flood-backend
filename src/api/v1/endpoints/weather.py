@@ -1,3 +1,11 @@
+"""
+Weather Data Endpoint Module
+
+This module provides weather-related API endpoints for the urban flooding backend.
+It includes functionality for retrieving current weather observations and historical
+weather data from the Bureau of Meteorology and other weather services.
+"""
+
 from fastapi import APIRouter, Depends
 from typing import Dict, Any
 from pydantic import BaseModel
@@ -13,7 +21,19 @@ router = APIRouter()
 
 
 def get_months_in_range(start_date: datetime, end_date: datetime) -> list:
-    """Get all YYYYMM strings for months in the date range"""
+    """
+    Generate a list of month strings (YYYYMM format) for the given date range.
+
+    Creates a list of all months between the start and end dates, inclusive,
+    formatted as YYYYMM strings for use in historical weather data URLs.
+
+    Args:
+        start_date (datetime): Start date of the range
+        end_date (datetime): End date of the range
+
+    Returns:
+        list: List of month strings in YYYYMM format (e.g., ["202301", "202302"])
+    """
     months = []
     current = start_date.replace(day=1)
 
@@ -29,7 +49,22 @@ def get_months_in_range(start_date: datetime, end_date: datetime) -> list:
 
 
 def fetch_historical_data(station: Dict[str, Any], start_date: datetime, end_date: datetime) -> list:
-    """Fetch historical weather data for a station within date range"""
+    """
+    Fetch historical weather data for a specific station within a date range.
+
+    Downloads and processes historical weather data from the Bureau of Meteorology
+    for the specified station and date range. Data is retrieved month by month
+    using the station's historical data URL template.
+
+    Args:
+        station (Dict[str, Any]): Station information dictionary containing
+            'history_url_template' and other station metadata
+        start_date (datetime): Start date for historical data retrieval
+        end_date (datetime): End date for historical data retrieval
+
+    Returns:
+        list: List of dictionaries containing processed historical weather data
+    """
     months = get_months_in_range(start_date, end_date)
     all_data = []
 
@@ -89,11 +124,27 @@ def fetch_historical_data(station: Dict[str, Any], start_date: datetime, end_dat
 
 
 class WeatherRequest(BaseModel):
+    """
+    Request model for current weather data endpoints.
+
+    Attributes:
+        lat (float): Latitude coordinate in decimal degrees
+        lon (float): Longitude coordinate in decimal degrees
+    """
     lat: float
     lon: float
 
 
 class HistoricalWeatherRequest(BaseModel):
+    """
+    Request model for historical weather data endpoints.
+
+    Attributes:
+        lat (float): Latitude coordinate in decimal degrees
+        lon (float): Longitude coordinate in decimal degrees
+        start_date (str): Start date in YYYY-MM-DD format
+        end_date (str): End date in YYYY-MM-DD format
+    """
     lat: float
     lon: float
     start_date: str  # Format: "YYYY-MM-DD"
@@ -102,6 +153,24 @@ class HistoricalWeatherRequest(BaseModel):
 
 @router.post("/weather", tags=["weather"])
 def get_weather(request: WeatherRequest, token: str = Depends(verify_token)):
+    """
+    Get current weather data for specified coordinates.
+
+    Finds the nearest weather station to the provided coordinates and retrieves
+    the latest weather observations from the Bureau of Meteorology. Returns
+    comprehensive weather data including temperature, humidity, wind, and pressure.
+
+    Args:
+        request (WeatherRequest): Request containing latitude and longitude
+        token (str): Authenticated user token (from Authorization header)
+
+    Returns:
+        dict: Response containing:
+            - code (int): Status code (0 for success, 1 for error)
+            - message (str): Status message
+            - data: Weather observation data or None if error
+            - station_info: Information about the weather station used
+    """
     try:
         # Find nearest station
         nearest_station = find_nearest_station(request.lat, request.lon)
@@ -186,6 +255,25 @@ def get_weather(request: WeatherRequest, token: str = Depends(verify_token)):
 
 @router.post("/weather/historical", tags=["weather"])
 def get_historical_weather(request: HistoricalWeatherRequest, token: str = Depends(verify_token)):
+    """
+    Get historical weather data for specified coordinates and date range.
+
+    Retrieves historical weather data from the Bureau of Meteorology for the
+    nearest weather station to the provided coordinates. Data is fetched for
+    the specified date range and processed from CSV files.
+
+    Args:
+        request (HistoricalWeatherRequest): Request containing coordinates and date range
+        token (str): Authenticated user token (from Authorization header)
+
+    Returns:
+        dict: Response containing:
+            - code (int): Status code (0 for success, 1 for error)
+            - message (str): Status message
+            - data: List of historical weather records or None if error
+            - station_info: Information about the weather station used
+            - date_range: The requested date range
+    """
     try:
         # Parse dates
         start_date = datetime.strptime(request.start_date, "%Y-%m-%d")

@@ -1,3 +1,11 @@
+"""
+Weather Warnings Endpoint Module
+
+This module provides weather warning API endpoints for the urban flooding backend.
+It includes functionality for retrieving, parsing, and filtering weather warnings
+from the Bureau of Meteorology RSS feeds and web pages.
+"""
+
 import requests
 import feedparser
 import re
@@ -13,6 +21,15 @@ router = APIRouter()
 
 
 class WarningsRequest(BaseModel):
+    """
+    Request model for weather warnings endpoints.
+
+    Attributes:
+        lat (float): Latitude coordinate in decimal degrees
+        lon (float): Longitude coordinate in decimal degrees
+        radius_km (Optional[float]): Search radius in kilometers (default: 100.0)
+        fetch_details (Optional[bool]): Whether to fetch detailed warning content (default: True)
+    """
     lat: float
     lon: float
     radius_km: Optional[float] = 100.0
@@ -20,7 +37,20 @@ class WarningsRequest(BaseModel):
 
 
 def fetch_warning_details(url: str) -> Dict[str, Any]:
-    """Fetch and parse detailed warning content from a URL"""
+    """
+    Fetch and parse detailed warning content from a BOM warning URL.
+
+    Downloads the HTML content from a Bureau of Meteorology warning page
+    and extracts structured information including warning text, areas,
+    and other relevant details.
+
+    Args:
+        url (str): The URL of the BOM warning page to fetch
+
+    Returns:
+        Dict[str, Any]: Dictionary containing parsed warning details including
+            title, content, warning areas, and metadata
+    """
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

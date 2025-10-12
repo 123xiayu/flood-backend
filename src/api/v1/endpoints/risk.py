@@ -1,3 +1,11 @@
+"""
+Flood Risk Assessment Endpoint Module
+
+This module provides flood risk assessment API endpoints for the urban flooding
+backend. It integrates with the digital twin platform to provide flood risk
+analysis based on coordinates and rainfall event scenarios.
+"""
+
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict
@@ -8,6 +16,15 @@ router = APIRouter()
 
 
 class RiskRequest(BaseModel):
+    """
+    Request model for flood risk assessment endpoints.
+
+    Attributes:
+        lat (float): Latitude coordinate in decimal degrees
+        lon (float): Longitude coordinate in decimal degrees
+        rainfall_event_id (Optional[str]): Rainfall event identifier for risk modeling
+            (e.g., 'design_2yr', 'design_10yr')
+    """
     lat: float = Field(
         None, description="Latitude in decimal degrees")
     lon: float = Field(
@@ -20,6 +37,20 @@ class RiskRequest(BaseModel):
 
 @router.post("/risk", tags=["risk"])
 def get_risk(request: RiskRequest) -> Dict[str, Any]:
+    """
+    Get flood risk assessment for specified coordinates and rainfall scenario.
+
+    Performs flood risk analysis using the digital twin platform for the provided
+    coordinates and rainfall event scenario. Returns detailed risk assessment
+    data including flood depth, flow velocity, and risk categorization.
+
+    Args:
+        request (RiskRequest): Request containing coordinates and optional rainfall event ID
+
+    Returns:
+        Dict[str, Any]: Risk assessment results from the digital twin platform
+            or error information if the request fails
+    """
     print(
         f"[RISK ANALYSIS] Fetching flood risk data for coordinates: ({request.lat}, {request.lon})")
     if request.rainfall_event_id:

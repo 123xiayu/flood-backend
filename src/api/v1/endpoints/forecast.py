@@ -1,4 +1,12 @@
 
+"""
+Weather Forecast Endpoint Module
+
+This module provides weather forecast API endpoints for the urban flooding backend.
+It includes functionality for retrieving weather forecasts and current weather
+conditions from the Bureau of Meteorology.
+"""
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from src.core.bom import fetch_weather_observation
@@ -11,12 +19,36 @@ router = APIRouter()
 
 
 class WeatherRequest(BaseModel):
+    """
+    Request model for weather forecast endpoints.
+
+    Attributes:
+        lat (float): Latitude coordinate in decimal degrees
+        lon (float): Longitude coordinate in decimal degrees
+    """
     lat: float
     lon: float
 
 
 @router.post("/forecast", tags=["forecast"])
 def get_forecast(request: WeatherRequest, token: str = Depends(verify_token)):
+    """
+    Get weather forecast for specified coordinates.
+
+    Retrieves detailed weather forecast data from the Bureau of Meteorology
+    for the nearest weather station to the provided coordinates. Returns
+    forecast periods with descriptions, conditions, and timing information.
+
+    Args:
+        request (WeatherRequest): Request containing latitude and longitude
+        token (str): Authenticated user token (from Authorization header)
+
+    Returns:
+        dict: Response containing:
+            - code (int): Status code (0 for success, 1 for error)
+            - message (str): Status message
+            - data: List of forecast period data or None if error
+    """
     try:
         nearest_station = find_nearest_station(request.lat, request.lon)
         if not nearest_station:
@@ -33,6 +65,23 @@ def get_forecast(request: WeatherRequest, token: str = Depends(verify_token)):
 
 @router.post("/weathercondition", tags=["weather"])
 def get_weather_condition(request: WeatherRequest, token: str = Depends(verify_token)):
+    """
+    Get current weather condition summary for specified coordinates.
+
+    Retrieves a simplified weather condition summary including the forecast
+    précis (brief description) and icon code from the Bureau of Meteorology.
+    This endpoint provides a quick overview of current weather conditions.
+
+    Args:
+        request (WeatherRequest): Request containing latitude and longitude
+        token (str): Authenticated user token (from Authorization header)
+
+    Returns:
+        dict: Response containing:
+            - code (int): Status code (0 for success, 1 for error)
+            - message (str): Status message
+            - data: Weather condition summary with précis and icon code
+    """
     try:
         nearest_station = find_nearest_station(request.lat, request.lon)
         if not nearest_station:

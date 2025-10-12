@@ -1,3 +1,11 @@
+"""
+Google Weather API Endpoint Module
+
+This module provides Google Weather API integration endpoints for the urban flooding
+backend. It includes functionality for retrieving current conditions, forecasts,
+and historical weather data from Google's Weather API service.
+"""
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 from src.core.google import fetch_google_conditions, fetch_google_hourly_forecast, fetch_google_daily_forecast, fetch_google_history
@@ -6,6 +14,13 @@ router = APIRouter()
 
 
 class WeatherRequest(BaseModel):
+    """
+    Request model for Google Weather API endpoints.
+
+    Attributes:
+        lat (float): Latitude coordinate in decimal degrees
+        lon (float): Longitude coordinate in decimal degrees
+    """
     lat: float
     lon: float
 
