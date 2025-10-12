@@ -247,20 +247,17 @@ def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_t
     Returns all active weather warnings from BOM RSS feed with optional detailed content.
     """
     print(
-        f"⚠️  [WARNINGS] Fetching weather warnings for coordinates: ({request.lat}, {request.lon})")
+        f"[WARNINGS] Fetching weather warnings for coordinates: ({request.lat}, {request.lon})")
     print(
-        f"📍 [WARNINGS] Search radius: {request.radius_km} km, Fetch details: {request.fetch_details}")
+        f"[WARNINGS] Search radius: {request.radius_km} km, Fetch details: {request.fetch_details}")
     try:
-        print(f"📡 [WARNINGS] Connecting to BOM RSS feed...")
         feed_data = fetch_warnings_rss()
 
         # Parse warnings with optional details
-        print(f"🔍 [WARNINGS] Parsing RSS feed data...")
         all_warnings = parse_warnings_feed(
             feed_data, fetch_details=request.fetch_details or False)
 
         # Filter by location (basic implementation for now)
-        print(f"📍 [WARNINGS] Filtering warnings by location...")
         filtered_warnings = filter_warnings_by_location(
             all_warnings,
             request.lat,
@@ -269,10 +266,9 @@ def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_t
         )
 
         # Get nearest station info for context
-        print(f"🗺️  [WARNINGS] Finding nearest weather station...")
         nearest_station = find_nearest_station(request.lat, request.lon)
         print(
-            f"✅ [WARNINGS] Found {len(filtered_warnings)} warnings in the area")
+            f"[WARNINGS] Found {len(filtered_warnings)} warnings in the area")
 
         return {
             "code": 0,
@@ -300,7 +296,7 @@ def get_weather_warnings(request: WarningsRequest, token: str = Depends(verify_t
         }
 
     except Exception as e:
-        print(f"❌ [WARNINGS] Error occurred: {str(e)}")
+        print(f"[WARNINGS] Error occurred: {str(e)}")
         return {
             "code": 1,
             "message": f"Error: {str(e)}",
@@ -317,18 +313,18 @@ def get_all_weather_warnings(fetch_details: bool = True, token: str = Depends(ve
     Query parameters:
     - fetch_details: Whether to fetch detailed content from each warning URL (default: True)
     """
-    print(f"🌐 [ALL WARNINGS] Fetching all weather warnings from BOM")
-    print(f"📋 [ALL WARNINGS] Fetch details: {fetch_details}")
+    print(f"[ALL WARNINGS] Fetching all weather warnings from BOM")
+    print(f"[ALL WARNINGS] Fetch details: {fetch_details}")
     try:
         # Fetch RSS feed
-        print(f"📡 [ALL WARNINGS] Connecting to BOM RSS feed...")
+        print(f"[ALL WARNINGS] Connecting to BOM RSS feed...")
         feed_data = fetch_warnings_rss()
 
         # Parse warnings with details
-        print(f"🔍 [ALL WARNINGS] Parsing RSS feed data...")
+        print(f"[ALL WARNINGS] Parsing RSS feed data...")
         all_warnings = parse_warnings_feed(
             feed_data, fetch_details=fetch_details)
-        print(f"✅ [ALL WARNINGS] Found {len(all_warnings)} total warnings")
+        print(f"[ALL WARNINGS] Found {len(all_warnings)} total warnings")
 
         return {
             "code": 0,
@@ -345,7 +341,7 @@ def get_all_weather_warnings(fetch_details: bool = True, token: str = Depends(ve
         }
 
     except Exception as e:
-        print(f"❌ [ALL WARNINGS] Error occurred: {str(e)}")
+        print(f"[ALL WARNINGS] Error occurred: {str(e)}")
         return {
             "code": 1,
             "message": f"Error: {str(e)}",
