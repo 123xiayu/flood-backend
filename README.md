@@ -76,7 +76,7 @@ urban_flooding_backend/
 4. **Set up environment variables**
 
    Create a copy of `.example.env` and rename `.env` in the project root.
-   Fill in the required varables
+   Fill in the required variables
 
 ### Running the Application
 
@@ -186,35 +186,5 @@ Key dependencies include:
 - **Pandas**: Data analysis and manipulation
 - **BeautifulSoup4**: HTML/XML parsing
 - **Feedparser**: RSS/Atom feed parsing
-
-## Deployment
-
-The application is designed to run in containerized environments. The default configuration listens on all interfaces (`0.0.0.0`) on port `8118`.
-
-For production deployment:
-
-1. Set appropriate environment variables
-2. Configure proper authentication tokens
-3. Set up reverse proxy (nginx, etc.)
-4. Configure SSL/TLS certificates
-5. Set up monitoring and logging
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is part of the Digital Twin Urban Flooding initiative.
-
-## Support
-
-For support and questions, please refer to the project documentation or create an issue in the repository.
-
----
 
 **Note**: This is a backend API service designed to work with urban flooding digital twin applications. Make sure to configure all required environment variables and API tokens before deployment.
