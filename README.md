@@ -188,3 +188,16 @@ Key dependencies include:
 - **Feedparser**: RSS/Atom feed parsing
 
 **Note**: This is a backend API service designed to work with urban flooding digital twin applications. Make sure to configure all required environment variables and API tokens before deployment.
+
+## Running Tests
+
+Run the unit test suite with the Python standard library `unittest` (no extra dependencies required):
+
+- Cross‑platform:
+  - `python -m unittest discover -s tests -p "test_*.py" -v`
+- Windows alternative (if `python` isn’t on PATH):
+  - `py -3 -m unittest discover -s tests -p "test_*.py" -v`
+
+Notes:
+- Tests instantiate the FastAPI app and call `/api/v1/health`.
+- Helper tests read `data/station.json`; ensure it remains available.
